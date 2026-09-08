@@ -5,12 +5,15 @@
 
 #include "net/websocket_client.h"
 #include "sbe/decoder.h"
+#include "util/env.h"
 #include "util/logging.h"
 
 #define HOST "stream-sbe.binance.com"
 #define PORT "9443"
 
 int main(int argc, char** argv) {
+    util::load_dotenv();
+
     const char* api_key = std::getenv("BINANCE_API_KEY");
     if (!api_key) {
         util::log_error("BINANCE_API_KEY environment variable is not set");
