@@ -4,6 +4,7 @@
 #include <string_view>
 
 #include "net/websocket_client.h"
+#include "sbe/decoder.h"
 #include "util/logging.h"
 
 #define HOST "stream-sbe.binance.com"
@@ -17,15 +18,21 @@ int main(int argc, char** argv) {
     }
 
     net::WebsocketClient client(HOST, PORT, api_key);
+    SBEDecoder decoder;
 
     client.set_text_handler([](std::string_view text) {
         util::log_info("text frame received");
         std::cout << text << std::endl;
     });
 
-    client.set_binary_handler([](const char* data, std::size_t length) {
-        // SBE binary payload; needs schema-generated decoder to interpret
-        util::log_info("binary SBE message received: " + std::to_string(length) + " bytes");
+    client.set_binary_handler([&decoder](const char* data, std::size_t length) {
+        for (const auto& trade : decoder.decode_trade(data, length)) {
+            util::log_info(
+                trade.symbol + " trade " + std::to_string(trade.trade_id) +
+                ": price=" + std::to_string(trade.price) +
+                " qty=" + std::to_string(trade.quantity) +
+                " buyerMaker=" + std::to_string(trade.is_buyer_maker));
+        }
     });
 
     try {

@@ -48,11 +48,16 @@ add_custom_command(
 
 add_custom_target(generate_sbe DEPENDS ${SBE_GENERATED_HEADERS})
 
-add_executable(websocket src/main.cpp)
+add_executable(websocket
+    src/main.cpp
+    src/net/websocket_client.cpp
+    src/sbe/decoder.cpp
+)
 add_dependencies(websocket generate_sbe)
 
 target_include_directories(websocket PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${SBE_GENERATED_DIR}
 )
 
