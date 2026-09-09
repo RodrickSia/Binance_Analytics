@@ -23,6 +23,10 @@ public:
     // Resolves, TCP/TLS/websocket-handshakes against target (e.g. "/ws/btcusdt@trade").
     void connect(const std::string& target);
 
+    // Blocking single-frame read; dispatches the frame to the configured handlers.
+    // Returns false once the socket has been closed by the peer.
+    bool read_one();
+
     // Blocking read loop; dispatches frames to the configured handlers until the socket closes.
     void run();
 

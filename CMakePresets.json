@@ -1,0 +1,44 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+    "configurePresets": [
+        {
+            "name": "default",
+            "displayName": "Default",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+        }
+    ],
+    "buildPresets": [
+        { "name": "default", "configurePreset": "default" }
+    ],
+    "testPresets": [
+        {
+            "name": "unit",
+            "configurePreset": "default",
+            "output": { "outputOnFailure": true },
+            "filter": { "exclude": { "label": "integration" } }
+        },
+        {
+            "name": "integration",
+            "configurePreset": "default",
+            "output": { "outputOnFailure": true },
+            "filter": { "include": { "label": "integration" } }
+        },
+        {
+            "name": "all",
+            "configurePreset": "default",
+            "output": { "outputOnFailure": true }
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "build-and-test",
+            "steps": [
+                { "type": "configure", "name": "default" },
+                { "type": "build", "name": "default" },
+                { "type": "test", "name": "unit" }
+            ]
+        }
+    ]
+}

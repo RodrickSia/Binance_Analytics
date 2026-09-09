@@ -67,22 +67,33 @@ void WebsocketClient::connect(const std::string& target) {
         });
 }
 
-void WebsocketClient::run() {
+bool WebsocketClient::read_one() {
     beast::flat_buffer buffer;
-    while (true) {
-        wss_.read(buffer);
 
-        if (wss_.got_text()) {
-            if (on_text_) {
-                on_text_(beast::buffers_to_string(buffer.data()));
-            }
-        } else if (on_binary_) {
-            auto data = buffer.data();
-            std::string bytes = beast::buffers_to_string(data);
-            on_binary_(bytes.data(), bytes.size());
+    boost::system::error_code ec;
+    wss_.read(buffer, ec);
+    if (ec == websocket::error::closed) {
+        return false;
+    }
+    if (ec) {
+        throw boost::system::system_error(ec);
+    }
+
+    if (wss_.got_text()) {
+        if (on_text_) {
+            on_text_(beast::buffers_to_string(buffer.data()));
         }
+    } else if (on_binary_) {
+        auto data = buffer.data();
+        std::string bytes = beast::buffers_to_string(data);
+        on_binary_(bytes.data(), bytes.size());
+    }
 
-        buffer.consume(buffer.size());
+    return true;
+}
+
+void WebsocketClient::run() {
+    while (read_one()) {
     }
 }
 

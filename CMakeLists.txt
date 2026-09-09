@@ -48,8 +48,7 @@ add_custom_command(
 
 add_custom_target(generate_sbe DEPENDS ${SBE_GENERATED_HEADERS})
 
-add_executable(websocket
-    src/main.cpp
+add_library(binance_core STATIC
     src/net/websocket_client.cpp
     src/sbe/decoder.cpp
     src/handlers/trade_handler.cpp
@@ -57,17 +56,26 @@ add_executable(websocket
     src/handlers/depth_handler.cpp
     src/handlers/event_dispatcher.cpp
 )
-add_dependencies(websocket generate_sbe)
+add_dependencies(binance_core generate_sbe)
 
-target_include_directories(websocket PRIVATE
+target_include_directories(binance_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${SBE_GENERATED_DIR}
 )
 
-target_link_libraries(websocket PRIVATE
+target_link_libraries(binance_core PUBLIC
     Boost::headers
     OpenSSL::SSL
     Threads::Threads
 )
+
+add_executable(websocket src/main.cpp)
+target_link_libraries(websocket PRIVATE binance_core)
+
+option(BUILD_TESTING "Build unit and integration tests" ON)
+if(BUILD_TESTING)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
 
