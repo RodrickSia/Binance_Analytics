@@ -2,8 +2,8 @@
 #include <cstddef>
 #include <iostream>
 #include <string_view>
-#include <type_traits>
 
+#include "handlers/event_dispatcher.h"
 #include "net/websocket_client.h"
 #include "sbe/decoder.h"
 #include "util/env.h"
@@ -23,39 +23,15 @@ int main(int argc, char** argv) {
 
     net::WebsocketClient client(HOST, PORT, api_key);
     SBEDecoder decoder;
+    handlers::EventDispatcher dispatcher;
 
     client.set_text_handler([](std::string_view text) {
         util::log_info("text frame received");
         std::cout << text << std::endl;
     });
 
-    client.set_binary_handler([&decoder](const char* data, std::size_t length) {
-        std::visit([](auto&& event) {
-            using T = std::decay_t<decltype(event)>;
-            if constexpr (std::is_same_v<T, std::vector<domain::TradeEvent>>) {
-                for (const auto& trade : event) {
-                    util::log_info(
-                        trade.symbol + " trade " + std::to_string(trade.trade_id) +
-                        ": price=" + std::to_string(trade.price) +
-                        " qty=" + std::to_string(trade.quantity) +
-                        " buyerMaker=" + std::to_string(trade.is_buyer_maker));
-                }
-            } else if constexpr (std::is_same_v<T, domain::BestBidAskEvent>) {
-                util::log_info(
-                    event.symbol + " bestBidAsk bid=" + std::to_string(event.bid_price) +
-                    "@" + std::to_string(event.bid_qty) +
-                    " ask=" + std::to_string(event.ask_price) +
-                    "@" + std::to_string(event.ask_qty));
-            } else if constexpr (std::is_same_v<T, domain::DepthDiffEvent>) {
-                util::log_info(
-                    event.symbol + " depthDiff bids=" + std::to_string(event.bids.size()) +
-                    " asks=" + std::to_string(event.asks.size()));
-            } else if constexpr (std::is_same_v<T, domain::DepthSnapshotEvent>) {
-                util::log_info(
-                    event.symbol + " depthSnapshot bids=" + std::to_string(event.bids.size()) +
-                    " asks=" + std::to_string(event.asks.size()));
-            }
-        }, decoder.decode(data, length));
+    client.set_binary_handler([&](const char* data, std::size_t length) {
+        dispatcher.handle(decoder.decode(data, length));
     });
 
     try {

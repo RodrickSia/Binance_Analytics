@@ -52,6 +52,10 @@ add_executable(websocket
     src/main.cpp
     src/net/websocket_client.cpp
     src/sbe/decoder.cpp
+    src/handlers/trade_handler.cpp
+    src/handlers/best_bid_ask_handler.cpp
+    src/handlers/depth_handler.cpp
+    src/handlers/event_dispatcher.cpp
 )
 add_dependencies(websocket generate_sbe)
 
